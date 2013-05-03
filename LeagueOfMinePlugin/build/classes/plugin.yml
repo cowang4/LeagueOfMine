@@ -1,0 +1,17 @@
+## YAML Template.
+---
+name: LeagueOfMine
+main: io.github.cowang4.leagueofmine.LeagueOfMine
+version: 0.1.5
+
+commands:
+  lom:
+    description: base command for all(most) of LeagueOfMine
+    usage: /lom <argument>
+    permission: op
+    permission-message: You don't have <permission>
+  setserverspawn:
+    description: change the spawn point of the server's world
+    usage: /setserverspawn
+    permission: op
+    permission-message: You don't have <permission>
