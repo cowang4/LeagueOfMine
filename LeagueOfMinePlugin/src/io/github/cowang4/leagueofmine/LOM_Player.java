@@ -4,7 +4,9 @@
  */
 package io.github.cowang4.leagueofmine;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 /**
@@ -17,4 +19,7 @@ public class LOM_Player {
     public PlayerInventory pre_game_inventory;
     public boolean isOnBlueTeam;
     public boolean isInGameArena;
+    public int bounty;
+    public ItemStack[] pre_game_items;
+    public GameMode pre_game_gamemode;
 }

@@ -15,6 +15,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -39,18 +42,20 @@ public class LOM_Listener implements Listener{
         Player player = event.getEntity();
         lomineMainClass.getLogger().info(player.getName());
         
-        if (lomineMainClass.isPlayingLOM && lomineMainClass.activePlayers.containsKey(event.getEntity().getName()) && lomineMainClass.activePlayers.get(player.getName()).isInGameArena)
+        if (lomineMainClass.isLOMEnabled && lomineMainClass.activePlayers.containsKey(event.getEntity().getName()) && lomineMainClass.activePlayers.get(player.getName()).isInGameArena && lomineMainClass.activePlayers.containsKey(event.getEntity().getKiller().getName()))
         {
-            lomineMainClass.getLogger().info("GOOD TO GO!");
+            //lomineMainClass.getLogger().info("GOOD TO GO!");
             if(lomineMainClass.activePlayers.get(player.getName()).isOnBlueTeam)
             {
-                lomineMainClass.getLogger().info("GOOD TO GO! BLUEEEEE");
+                //lomineMainClass.getLogger().info("GOOD TO GO! BLUEEEEE");
                 Bukkit.getServer().getWorld("world").setSpawnLocation(lomineMainClass.locations.LOM_BlueTeamSpawnPoint.getBlockX(), lomineMainClass.locations.LOM_BlueTeamSpawnPoint.getBlockY(), lomineMainClass.locations.LOM_BlueTeamSpawnPoint.getBlockZ()); 
+                handlePlayerDeath(true, player);
             }
             else if (!lomineMainClass.activePlayers.get(player.getName()).isOnBlueTeam)
             {
-                lomineMainClass.getLogger().info("GOOD TO GO! REDDDDDD");
+                //lomineMainClass.getLogger().info("GOOD TO GO! REDDDDDD");
                 Bukkit.getServer().getWorld("world").setSpawnLocation(lomineMainClass.locations.LOM_RedTeamSpawnPoint.getBlockX(), lomineMainClass.locations.LOM_RedTeamSpawnPoint.getBlockY(), lomineMainClass.locations.LOM_RedTeamSpawnPoint.getBlockZ()); 
+                handlePlayerDeath(false, player);
             }
         }
         else
@@ -64,4 +69,17 @@ public class LOM_Listener implements Listener{
         lomineMainClass = lom;
     }
     
+    public void handlePlayerDeath(boolean BlueIsTrue, Player player)
+    {
+        Player killer = player.getKiller();
+        if (lomineMainClass.activePlayers.get(player.getName()).isOnBlueTeam != lomineMainClass.activePlayers.get(killer.getName()).isOnBlueTeam)
+        {
+            int playerBounty = lomineMainClass.activePlayers.get(player.getName()).bounty;
+            ItemStack iss = new ItemStack(Material.GOLD_NUGGET, playerBounty);
+            killer.getInventory().addItem(iss);
+            killer.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Nice job killing " + player.getName() + " you have received " + playerBounty + " gold.");
+            lomineMainClass.activePlayers.get(killer.getName()).bounty = lomineMainClass.activePlayers.get(killer.getName()).bounty + 2;
+            lomineMainClass.activePlayers.get(player.getName()).bounty = lomineMainClass.activePlayers.get(player.getName()).bounty - 2;
+        }
+    }
 }

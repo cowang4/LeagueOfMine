@@ -4,6 +4,11 @@
  */
 package io.github.cowang4.leagueofmine;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,8 +16,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -29,7 +37,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class LeagueOfMine extends JavaPlugin{
 
-    public boolean isPlayingLOM = false;
+    public boolean isLOMEnabled = false;
     public LOM_Locations locations;
     public HashMap<String, LOM_Player> activePlayers = new HashMap<>();
     public LOM_Listener listener;
@@ -37,14 +45,14 @@ public class LeagueOfMine extends JavaPlugin{
     
     @Override
     public void onEnable()
-    {
+    {   
         Location serverSpawn = Bukkit.getServer().getWorld("world").getSpawnLocation();
         xspawn = serverSpawn.getBlockX(); yspawn = serverSpawn.getBlockY(); zspawn = serverSpawn.getBlockZ();
         listener = new LOM_Listener();
         listener.setLOM(this);
         locations = new LOM_Locations();
         getLogger().info("LeagueOfMine has been Enabled!");
-        isPlayingLOM = false;
+        isLOMEnabled = false;
         
         Bukkit.getServer().getPluginManager().registerEvents(listener, this);
         
@@ -66,7 +74,7 @@ public class LeagueOfMine extends JavaPlugin{
             playerLeaveLobby(player.name);
         }
         
-        isPlayingLOM = false;
+        isLOMEnabled = false;
         getLogger().info("LeagueOfMine has been Disabled! :(");
         
     }
@@ -83,22 +91,22 @@ public class LeagueOfMine extends JavaPlugin{
 
             if(args[0].equalsIgnoreCase("enable"))
             {
-                isPlayingLOM = true;
-                Bukkit.broadcastMessage("LeagueOfMine has been enabled! Normal gameplay is probs fucked up...");
+                isLOMEnabled = true;
+                Bukkit.broadcastMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "LeagueOfMine has been enabled! Normal gameplay is probs fucked up...");
                 //Other stuff probs .... maybes not
                 return true;
             }
             
             if(args[0].equalsIgnoreCase("disable"))
             {
-                isPlayingLOM = false;
-                Bukkit.broadcastMessage("LeagueOfMine has been disabled! Normal gameplay is probs less fucked up...");
+                isLOMEnabled = false;
+                Bukkit.broadcastMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "LeagueOfMine has been disabled! Normal gameplay is probs less fucked up...");
                 return true;
             }
             
             if(args[0].equalsIgnoreCase("join"))
             {
-                if (isPlayingLOM){
+                if (isLOMEnabled){
                     
                     if(sender instanceof Player)
                     {
@@ -106,14 +114,14 @@ public class LeagueOfMine extends JavaPlugin{
                         Player player = Bukkit.getServer().getPlayer(sender.getName());
                         lomPlayer.pre_game_loc = player.getLocation();
                         lomPlayer.pre_game_inventory = player.getInventory();
+                        lomPlayer.pre_game_items = player.getInventory().getContents();
                         lomPlayer.name = player.getName();
-                        player.sendMessage("Teleporting you to the Lobby...");
+                        lomPlayer.pre_game_gamemode = player.getGameMode();
+                        player.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Teleporting you to the Lobby...");
                         player.teleport(locations.LOM_LobbyCordinates);
-                        if(!activePlayers.containsKey(player.getName()))
-                        {
-                            activePlayers.put(player.getName(), lomPlayer);
-                        }
-                        
+
+                        activePlayers.put(player.getName(), lomPlayer);//if already was in list, overwrites with new data
+
                         
                         return true;
                     }
@@ -132,14 +140,14 @@ public class LeagueOfMine extends JavaPlugin{
             
             if (args[0].equalsIgnoreCase("leave"))
             {
-                if (isPlayingLOM && sender instanceof Player && activePlayers.containsKey(sender.getName()) && activePlayers.get(sender.getName()).isInGameArena)
+                if (isLOMEnabled && sender instanceof Player && activePlayers.containsKey(sender.getName()) && activePlayers.get(sender.getName()).isInGameArena)
                 {   
                     if(playerLeaveGameArena(sender.getName()))
                         return true;
                     else
                         return false;
                 }
-                else if(isPlayingLOM && sender instanceof Player && activePlayers.containsKey(sender.getName()) && !activePlayers.get(sender.getName()).isInGameArena)
+                else if(isLOMEnabled && sender instanceof Player && activePlayers.containsKey(sender.getName()) && !activePlayers.get(sender.getName()).isInGameArena)
                 {
                     if(playerLeaveLobby(sender.getName()))
                         return true;
@@ -155,66 +163,25 @@ public class LeagueOfMine extends JavaPlugin{
             
             if(args[0].equalsIgnoreCase("joinblue"))
             {
-                if (isPlayingLOM){
-                    
-                    if(sender instanceof Player && activePlayers.containsKey(sender.getName()))
-                    {
-                        sender.sendMessage("Teleporting you to Blue team spawnpoint..." + sender.getName());
-                        activePlayers.get(sender.getName()).isInGameArena = true;
-                        activePlayers.get(sender.getName()).isOnBlueTeam = true;
-                        Player player = Bukkit.getServer().getPlayer(sender.getName());
-                        player.teleport(locations.LOM_BlueTeamSpawnPoint);
-                        player.getInventory().clear();
-                        return true;
-                    }
-                    else
-                    {
-                        sender.sendMessage("NAHHHH!");
-                        return true;
-                    }
-                }
-                else
-                {
-                    sender.sendMessage("LeagueOfMinecraft isnt enabled. So you cannot join a game. (enable with /lom enable)");
-                    return true;
-                }
+                playerJoinTeam(true, sender);
+                return true;
             }
             
             if(args[0].equalsIgnoreCase("joinred"))
             {
-                if (isPlayingLOM){
-                    
-                    if(sender instanceof Player && activePlayers.containsKey(sender.getName()))
-                    {
-                        sender.sendMessage("Teleporting you to Red team spawnpoint...");
-                        activePlayers.get(sender.getName()).isInGameArena = true;
-                        activePlayers.get(sender.getName()).isOnBlueTeam = false;
-                        Player player = Bukkit.getServer().getPlayer(sender.getName());
-                        player.teleport(locations.LOM_RedTeamSpawnPoint);
-                        player.getInventory().clear();
-                        return true;
-                    }
-                    else
-                    {
-                        sender.sendMessage("NAHHHH!");
-                        return true;
-                    }
-                }
-                else
-                {
-                    sender.sendMessage("LeagueOfMinecraft isnt enabled. So you cannot join a game. (enable with /lom enable)");
-                    return true;
-                }
+                playerJoinTeam(false, sender);
+                return true;
             }
             
             if(args[0].equalsIgnoreCase("start"))
             {
-                if(isPlayingLOM && !activePlayers.isEmpty())
+                if(isLOMEnabled && !activePlayers.isEmpty())
                 {
                     boolean starting = true;
                     manipulateGates(starting);//no magic booleans!!!
                 }
                 else{sender.sendMessage("Need to enable LOM or join a team.");}
+                return true;
             }
           
         }    
@@ -237,6 +204,7 @@ public class LeagueOfMine extends JavaPlugin{
             Location playerLoc = player.getLocation();
             Bukkit.getServer().getWorld("world").setSpawnLocation(playerLoc.getBlockX(), playerLoc.getBlockY(), playerLoc.getBlockZ());
             xspawn = playerLoc.getBlockX(); yspawn = playerLoc.getBlockY(); zspawn = playerLoc.getBlockZ();
+            player.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Changed Server's Spawn Point");
             return true;
         }
         return false;
@@ -257,7 +225,7 @@ public class LeagueOfMine extends JavaPlugin{
         {
             
             LOM_Player lomPlayer = activePlayers.get(playerName);
-            player.sendMessage("Teleporting You back to previous location...");
+            player.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Teleporting You back to previous location...");
             player.teleport(lomPlayer.pre_game_loc);
             activePlayers.remove(playerName);
             
@@ -274,11 +242,14 @@ public class LeagueOfMine extends JavaPlugin{
         Player player = Bukkit.getServer().getPlayer(playerName);
         if (activePlayers.containsKey(playerName))
         {
-            player.sendMessage("Teleporting you back to the lobby...");
+            player.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Teleporting you back to the lobby...");
             player.teleport(locations.LOM_LobbyCordinates);
             activePlayers.get(playerName).isInGameArena = false;
             ItemStack[] iss = activePlayers.get(playerName).pre_game_inventory.getContents();
+            player.getInventory().clear();
             player.getInventory().setContents(iss);
+            player.getInventory().setContents(activePlayers.get(player.getName()).pre_game_items);
+            player.setGameMode(activePlayers.get(player.getName()).pre_game_gamemode);
             
             return true;
         }
@@ -292,7 +263,7 @@ public class LeagueOfMine extends JavaPlugin{
     
     public void manipulateGates(boolean openGates)
     {
-        if (!activePlayers.isEmpty() && isPlayingLOM)
+        if (!activePlayers.isEmpty() && isLOMEnabled)
         {
             World world = Bukkit.getWorld("world");
             Block redGateBlock1 = world.getBlockAt(locations.LOM_RedGate1);
@@ -324,6 +295,44 @@ public class LeagueOfMine extends JavaPlugin{
         }
     }
     
-    
+    public void playerJoinTeam(boolean blueIsTrue, CommandSender sender)
+    {
+        if (isLOMEnabled){
+
+                        if(sender instanceof Player && activePlayers.containsKey(sender.getName()))
+                        {
+                            sender.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Teleporting you to Blue team spawnpoint...");
+                            activePlayers.get(sender.getName()).isInGameArena = true;
+                            activePlayers.get(sender.getName()).bounty = 10;
+                            Player player = Bukkit.getServer().getPlayer(sender.getName());
+                            player.getInventory().clear();
+                            player.setGameMode(GameMode.ADVENTURE);
+                            
+                            if(blueIsTrue)
+                            {
+                                activePlayers.get(sender.getName()).isOnBlueTeam = true;
+                                player.teleport(locations.LOM_BlueTeamSpawnPoint);
+                            }
+                            else
+                            {
+                                activePlayers.get(sender.getName()).isOnBlueTeam = false;
+                                player.teleport(locations.LOM_RedTeamSpawnPoint);
+                            }
+                            
+                            return;
+                        }
+                        else
+                        {
+                            sender.sendMessage("NAHHHH!");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        sender.sendMessage("LeagueOfMinecraft isnt enabled. So you cannot join a game. (enable with /lom enable)");
+                        return;
+                    }
+
+    }
     
 }
