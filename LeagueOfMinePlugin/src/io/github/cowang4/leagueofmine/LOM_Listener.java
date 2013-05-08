@@ -17,7 +17,10 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 
 /**
  *
@@ -28,12 +31,45 @@ public class LOM_Listener implements Listener{
     LeagueOfMine lomineMainClass;
     
     @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerTakeDamage(EntityDamageEvent event)
+    public void onTakeDamage(EntityDamageEvent event)
     {
-        lomineMainClass.getLogger().info("Found Damage on Entity: " + event.getEntity().toString());
-        lomineMainClass.getLogger().info("Coming from: " + event.getCause().name());
-        lomineMainClass.getLogger().info("Coming from: " + event.getCause().toString());
+        Player player = (Player)event.getEntity();
+        if(event.getEntity() instanceof Player && lomineMainClass.activePlayers.containsKey(player.getName()))
+        {
+            if(event.getCause().equals(EntityDamageEvent.DamageCause.PROJECTILE))
+            {
+                lomineMainClass.getLogger().info("Someone got Shot!");
+                
+            }
+            lomineMainClass.getLogger().info("Found Damage on Entity: " + event.getEntity().toString());
+            lomineMainClass.getLogger().info("Coming from: " + event.getCause().name());
+            lomineMainClass.getLogger().info("Coming from: " + event.getCause().toString());
+        }
+        
         //i give up for now
+    }
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onShotEvent(ProjectileHitEvent event)
+    {
+        Projectile proj = event.getEntity();
+        Player player = (Player)proj.getShooter();
+        lomineMainClass.getLogger().info("Someone was shot!");
+    }
+    
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onShootBow(EntityShootBowEvent event)
+    {
+        if (event.getEntityType().equals(EntityType.PLAYER))
+        {
+            Player player = (Player)event.getEntity();
+            if(lomineMainClass.activePlayers.containsKey(player.getName()))
+            {
+                //event.setProjectile();
+                lomineMainClass.getLogger().info(player.getName() + " shot a bow.");//idk what to od for this know
+            }
+        }
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -78,8 +114,12 @@ public class LOM_Listener implements Listener{
             ItemStack iss = new ItemStack(Material.GOLD_NUGGET, playerBounty);
             killer.getInventory().addItem(iss);
             killer.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Nice job killing " + player.getName() + " you have received " + playerBounty + " gold.");
-            lomineMainClass.activePlayers.get(killer.getName()).bounty = lomineMainClass.activePlayers.get(killer.getName()).bounty + 2;
-            lomineMainClass.activePlayers.get(player.getName()).bounty = lomineMainClass.activePlayers.get(player.getName()).bounty - 2;
+            
+            if(lomineMainClass.activePlayers.get(killer.getName()).bounty < 20)
+                lomineMainClass.activePlayers.get(killer.getName()).bounty = lomineMainClass.activePlayers.get(killer.getName()).bounty + 2;
+            
+            if(lomineMainClass.activePlayers.get(player.getName()).bounty > 3)
+                lomineMainClass.activePlayers.get(player.getName()).bounty = lomineMainClass.activePlayers.get(player.getName()).bounty - 2;
         }
     }
 }
