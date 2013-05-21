@@ -33,17 +33,23 @@ public class LOM_Listener implements Listener{
     @EventHandler(priority = EventPriority.HIGH)
     public void onTakeDamage(EntityDamageEvent event)
     {
-        Player player = (Player)event.getEntity();
-        if(event.getEntity() instanceof Player && lomineMainClass.activePlayers.containsKey(player.getName()))
-        {
-            if(event.getCause().equals(EntityDamageEvent.DamageCause.PROJECTILE))
-            {
-                lomineMainClass.getLogger().info("Someone got Shot!");
                 
+        if(event.getEntity() instanceof Player)
+        {
+            Player player = (Player)event.getEntity();
+            
+            if(lomineMainClass.activePlayers.containsKey(player.getName()))
+            {
+
+                if(event.getCause().equals(EntityDamageEvent.DamageCause.PROJECTILE))
+                {
+                    lomineMainClass.getLogger().info("Someone got Shot!");
+
+                }
+                lomineMainClass.getLogger().info("Found Damage on Entity: " + event.getEntity().toString());
+                lomineMainClass.getLogger().info("Coming from: " + event.getCause().name());
+                lomineMainClass.getLogger().info("Coming from: " + event.getCause().toString());
             }
-            lomineMainClass.getLogger().info("Found Damage on Entity: " + event.getEntity().toString());
-            lomineMainClass.getLogger().info("Coming from: " + event.getCause().name());
-            lomineMainClass.getLogger().info("Coming from: " + event.getCause().toString());
         }
         
         //i give up for now
@@ -53,7 +59,8 @@ public class LOM_Listener implements Listener{
     public void onShotEvent(ProjectileHitEvent event)
     {
         Projectile proj = event.getEntity();
-        Player player = (Player)proj.getShooter();
+        if (proj.getShooter() instanceof Player){
+            Player player = (Player)proj.getShooter();}
         lomineMainClass.getLogger().info("Someone was shot!");
     }
     

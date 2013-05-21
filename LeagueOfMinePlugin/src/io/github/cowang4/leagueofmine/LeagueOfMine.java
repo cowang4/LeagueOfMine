@@ -179,6 +179,7 @@ public class LeagueOfMine extends JavaPlugin{
                 {
                     boolean starting = true;
                     manipulateGates(starting);//no magic booleans!!!
+                    Bukkit.getServer().getWorld("world").setGameRuleValue("keepInventory", "true");
                 }
                 else{sender.sendMessage("Need to enable LOM or join a team.");}
                 return true;
@@ -250,6 +251,11 @@ public class LeagueOfMine extends JavaPlugin{
             player.getInventory().setContents(iss);
             player.getInventory().setContents(activePlayers.get(player.getName()).pre_game_items);
             player.setGameMode(activePlayers.get(player.getName()).pre_game_gamemode);
+            
+            if(activePlayers.isEmpty())
+            {
+                gameCleanup();
+            }
             
             return true;
         }
@@ -333,6 +339,12 @@ public class LeagueOfMine extends JavaPlugin{
                         return;
                     }
 
+    }
+    
+    public void gameCleanup()
+    {
+        manipulateGates(false);//close
+        Bukkit.getServer().getWorld("world").setGameRuleValue("keepInventory", "false");
     }
     
 }
