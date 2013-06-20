@@ -21,6 +21,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 
 /**
  *
@@ -122,11 +123,19 @@ public class LOM_Listener implements Listener{
             killer.getInventory().addItem(iss);
             killer.sendMessage("[" + ChatColor.DARK_GREEN + "LOM" + ChatColor.RESET + "]" + ChatColor.GOLD + "Nice job killing " + player.getName() + " you have received " + playerBounty + " gold.");
             
-            if(lomineMainClass.activePlayers.get(killer.getName()).bounty < 20)
+            if(lomineMainClass.activePlayers.get(killer.getName()).bounty < 20){
                 lomineMainClass.activePlayers.get(killer.getName()).bounty = lomineMainClass.activePlayers.get(killer.getName()).bounty + 2;
+            }
             
-            if(lomineMainClass.activePlayers.get(player.getName()).bounty > 3)
+            if(lomineMainClass.activePlayers.get(player.getName()).bounty > 3){
                 lomineMainClass.activePlayers.get(player.getName()).bounty = lomineMainClass.activePlayers.get(player.getName()).bounty - 2;
+            }
         }
+    }
+    
+    @EventHandler
+    public void onWorldUnload(WorldUnloadEvent ev)
+    {
+        ev.getWorld().setSpawnLocation(lomineMainClass.xspawn, lomineMainClass.yspawn, lomineMainClass.zspawn);
     }
 }

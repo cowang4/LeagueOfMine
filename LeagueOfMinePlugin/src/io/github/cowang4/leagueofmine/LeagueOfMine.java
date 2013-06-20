@@ -42,11 +42,12 @@ public class LeagueOfMine extends JavaPlugin{
     public HashMap<String, LOM_Player> activePlayers = new HashMap<>();
     public LOM_Listener listener;
     public int xspawn, yspawn, zspawn;
+    Location serverSpawn;
     
     @Override
     public void onEnable()
     {   
-        Location serverSpawn = Bukkit.getServer().getWorld("world").getSpawnLocation();
+        serverSpawn = Bukkit.getServer().getWorlds().get(0).getSpawnLocation();
         xspawn = serverSpawn.getBlockX(); yspawn = serverSpawn.getBlockY(); zspawn = serverSpawn.getBlockZ();
         listener = new LOM_Listener();
         listener.setLOM(this);
@@ -63,7 +64,7 @@ public class LeagueOfMine extends JavaPlugin{
     @Override
     public void onDisable()
     {
-        Bukkit.getServer().getWorld("world").setSpawnLocation(xspawn, yspawn, zspawn);
+        //Bukkit.getServer().getWorld("world").setSpawnLocation(xspawn, yspawn, zspawn); doesn't work
         
         Collection players = activePlayers.values();
         Iterator it = players.iterator();
