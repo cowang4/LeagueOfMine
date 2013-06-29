@@ -104,7 +104,14 @@ public class LOM_Listener implements Listener{
         }
         else
         {
-             Bukkit.getServer().getWorld("world").setSpawnLocation(lomineMainClass.xspawn, lomineMainClass.yspawn, lomineMainClass.zspawn);
+            try
+            {
+                Bukkit.getServer().getWorld("world").setSpawnLocation(lomineMainClass.xspawn, lomineMainClass.yspawn, lomineMainClass.zspawn);
+            }
+            catch(Exception e)
+            {
+                
+            }
         }
     }
     
